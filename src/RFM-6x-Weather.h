@@ -10,10 +10,22 @@
 
 #include <RH_RF69.h>
 
+
+// TODO: come up with a smarter way to choose packet length and handle multiple lengths
+// Somehow choose the longest packet length and use the CRC or first byte to
+// identify any incoming packets.
+#define RFM6xW_PACKET_LEN 9
+#define RFM6xW_HEADER_LEN 1
+
+
+
 class RFM6xWeather : public RH_RF69
 {
-  // public:
+ public:
+  bool init();
   
+ protected:
+  void readFifo();
 }
 
 
