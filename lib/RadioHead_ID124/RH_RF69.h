@@ -716,7 +716,7 @@ public:
     /// - Sets the frequency to 434.0 MHz
     /// - Sets the modem data rate to FSK_Rb2Fd5
     /// \return  true if everything was successful
-    bool        init();
+    virtual bool        init();
 
     /// Reads the on-chip temperature sensor.
     /// The RF69 must be in Idle mode (= RF69 Standby) to measure temperature.
@@ -869,11 +869,11 @@ protected:
     /// This is a low level function to handle the interrupts for one instance of RF69.
     /// Called automatically by isr*()
     /// Should not need to be called by user code.
-    void           handleInterrupt();
+    virtual void           handleInterrupt();
 
     /// Low level function to read the FIFO and put the received data into the receive buffer
     /// Should not need to be called by user code.
-    void           readFifo();
+    virtual void           readFifo();
 
 protected:
     /// Low level interrupt service routine for RF69 connected to interrupt 0

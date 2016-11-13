@@ -27,8 +27,8 @@ class RFM6xWeather : public RH_RF69
     {
     };
   
-  bool init();
-  void handleInterrupt();
+  bool init() override;
+  void handleInterrupt() override;
   
   // protected:
   void readFifo() override;
