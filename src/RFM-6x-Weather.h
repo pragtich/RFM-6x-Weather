@@ -22,11 +22,17 @@
 class RFM6xWeather : public RH_RF69
 {
  public:
-  bool init();
+ RFM6xWeather(uint8_t slaveSelectPin = SS, uint8_t interruptPin = 2, RHGenericSPI& spi = hardware_spi)
+   : RH_RF69(slaveSelectPin, interruptPin, spi)
+    {
+    };
   
- protected:
-  void readFifo();
-}
+  bool init();
+  void handleInterrupt();
+  
+  // protected:
+  void readFifo() override;
+};
 
 
 
