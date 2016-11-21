@@ -45,26 +45,16 @@ void setup()
 
 void loop(){
 
-  //  Serial.println("1");
-  //  rfm.printRegister(RH_RF69_REG_27_IRQFLAGS1 );
-  //rfm.printRegister(RH_RF69_REG_28_IRQFLAGS2 );
-    if (rfm.available()){
-  // if (false){
-    
-    Serial.println("Packet available");
+  if (rfm.available()){
     n = sizeof(buffer);
     if(rfm.recv(buffer, &n)) {
-      Serial.print("Packet contents. n= ");
-      Serial.println(n);
       PrintHex8(buffer, n);
+      Serial.println();
     } else {
       Serial.println("Problem reading packet");
     }
   } else {
     yield();
-    //delay(200);
-    // Serial.println("2");
   }
   delay(1000);
-  Serial.print(".");
 }

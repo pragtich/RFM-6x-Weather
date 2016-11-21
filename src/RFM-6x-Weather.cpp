@@ -9,9 +9,6 @@
 //TODO: why is all the SPI stuff hard coded here? 
 void RFM6xWeather::readFifo()
 {
-  Serial.println("readFifo");
-  digitalWrite(2, LOW);
-  //Serial.println("reading FIFO");
     ATOMIC_BLOCK_START;
     digitalWrite(_slaveSelectPin, LOW); // TODO: is this required? Does SPI not dot this?
     _spi.transfer(RH_RF69_REG_00_FIFO); // Send the start address with the write mask off
@@ -25,8 +22,6 @@ void RFM6xWeather::readFifo()
       _buf[_bufLen] = _spi.transfer(0);
     _rxGood++;
     _rxBufValid = true;
-    Serial.print("Received buffer n=");
-    Serial.println(_bufLen);
    
     digitalWrite(_slaveSelectPin, HIGH);
     ATOMIC_BLOCK_END;
@@ -56,9 +51,6 @@ bool RFM6xWeather::init()
 
 void RFM6xWeather::handleInterrupt()
 {
-  Serial.println("int");
-  digitalWrite(2, LOW);
-  //delay(300);
     // Get the interrupt cause
     uint8_t irqflags2 = spiRead(RH_RF69_REG_28_IRQFLAGS2);
     if (_mode == RHModeTx && (irqflags2 & RH_RF69_IRQFLAGS2_PACKETSENT))
@@ -66,23 +58,17 @@ void RFM6xWeather::handleInterrupt()
 	// A transmitter message has been fully sent
 	setModeIdle(); // Clears FIFO
 	_txGood++;
-//	Serial.println("PACKETSENT");
     }
     // Must look for PAYLOADREADY, not CRCOK, since only PAYLOADREADY occurs _after_ AES decryption
     // has been done
     if (_mode == RHModeRx && (irqflags2 & RH_RF69_IRQFLAGS2_PAYLOADREADY))
     {
-	// A complete message has been received with good CRC
+	// A complete message has been received 
 	_lastRssi = -((int8_t)(spiRead(RH_RF69_REG_24_RSSIVALUE) >> 1));
 	_lastPreambleTime = millis();
 
 	setModeIdle();
 	// Save it in our buffer
 	readFifo();
-	//Serial.println("PAYLOADREADY");
-	digitalWrite(2, LOW);
-
     }
-    digitalWrite(2, HIGH);
-
 }
