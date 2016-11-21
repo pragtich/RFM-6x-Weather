@@ -9,6 +9,7 @@
 //TODO: why is all the SPI stuff hard coded here? 
 void RFM6xWeather::readFifo()
 {
+  Serial.println("readFifo");
   digitalWrite(2, LOW);
   //Serial.println("reading FIFO");
     ATOMIC_BLOCK_START;
@@ -17,14 +18,14 @@ void RFM6xWeather::readFifo()
     uint8_t payloadlen = RFM6xW_PACKET_LEN-RFM6xW_HEADER_LEN; // Use fixed packet length
     // Get the rest of the headers
 
-    _rxHeaderId    = _spi.transfer(0);  //Packet type in Finite Offset weather stations
+    //_rxHeaderId    = _spi.transfer(0);  //Packet type in Finite Offset weather stations
 
     // And now the real payload
     for (_bufLen = 0; _bufLen < (payloadlen); _bufLen++)
       _buf[_bufLen] = _spi.transfer(0);
     _rxGood++;
     _rxBufValid = true;
-    Serial.println("Received buffer");
+    Serial.print("Received buffer n=");
     Serial.println(_bufLen);
    
     digitalWrite(_slaveSelectPin, HIGH);
@@ -36,6 +37,7 @@ void RFM6xWeather::readFifo()
 
 bool RFM6xWeather::init()
 {
+  Serial.println("init");
   if (!RH_RF69::init())
     return false;
 
@@ -54,6 +56,7 @@ bool RFM6xWeather::init()
 
 void RFM6xWeather::handleInterrupt()
 {
+  Serial.println("int");
   digitalWrite(2, LOW);
   //delay(300);
     // Get the interrupt cause

@@ -21,9 +21,11 @@ void PrintHex8(uint8_t *data, uint8_t length) // prints 8-bit data in hex with l
        }
 }
 
+/*
 void myisr(void){
   rfm.handleInterrupt();
 }
+*/
 
 void setup()
 {
@@ -37,7 +39,7 @@ void setup()
    digitalWrite(LEDPIN, LOW);
    delay(1000);
    digitalWrite(LEDPIN, HIGH);
-   attachInterrupt(RFM_INT, &myisr, RISING);
+   // attachInterrupt(RFM_INT, &myisr, RISING);
 }
 
 
@@ -50,10 +52,10 @@ void loop(){
   // if (false){
     
     Serial.println("Packet available");
-
+    n = sizeof(buffer);
     if(rfm.recv(buffer, &n)) {
-      Serial.println("Packet contents. n= ");
-      Serial.print(n);
+      Serial.print("Packet contents. n= ");
+      Serial.println(n);
       PrintHex8(buffer, n);
     } else {
       Serial.println("Problem reading packet");

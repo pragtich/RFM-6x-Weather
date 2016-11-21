@@ -15,7 +15,7 @@
 // Somehow choose the longest packet length and use the CRC or first byte to
 // identify any incoming packets.
 #define RFM6xW_PACKET_LEN 9
-#define RFM6xW_HEADER_LEN 1
+#define RFM6xW_HEADER_LEN 0
 
 
 
