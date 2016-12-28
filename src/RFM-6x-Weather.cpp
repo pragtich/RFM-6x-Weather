@@ -1,6 +1,41 @@
 
 #include <RFM-6x-Weather.h>
 
+/*
+* Function taken from Luc Small (http://lucsmall.com), itself
+* derived from the OneWire Arduino library. Modifications to
+* the polynomial according to Fine Offset's CRC8 calulations.
+*/
+uint8_t RFM6xWeather::_crc8( uint8_t *addr, uint8_t len)
+{
+	uint8_t crc = 0;
+
+	// Indicated changes are from reference CRC-8 function in OneWire library
+	while (len--) {
+		uint8_t inbyte = *addr++;
+		uint8_t i;
+		for (i = 8; i; i--) {
+			uint8_t mix = (crc ^ inbyte) & 0x80; // changed from & 0x01
+			crc <<= 1; // changed from right shift
+			if (mix) crc ^= 0x31;// changed from 0x8C;
+			inbyte <<= 1; // changed from right shift
+		}
+	}
+	return crc;
+}
+
+bool RFM6xWeather::CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN])
+{
+  bool match;
+
+  match = _crc8(buffer, RFM6xW_PACKET_LEN-1) == buffer[RFM6xW_PACKET_LEN-1];
+  if (!match) {
+    Serial.println("Non-matching CRC");
+  };
+  return match;
+}
+
+
 // Override of the existing readFifo
 //
 // The existing function is hard-coded for variable packet length, and
@@ -20,9 +55,11 @@ void RFM6xWeather::readFifo()
     // And now the real payload
     for (_bufLen = 0; _bufLen < (payloadlen); _bufLen++)
       _buf[_bufLen] = _spi.transfer(0);
-    _rxGood++;
-    _rxBufValid = true;
-   
+    if(CRC_ok(_buf)){
+      _rxGood++;
+      _rxBufValid = true;
+    }
+
     digitalWrite(_slaveSelectPin, HIGH);
     ATOMIC_BLOCK_END;
     // Any junk remaining in the FIFO will be cleared next time we go to receive mode.

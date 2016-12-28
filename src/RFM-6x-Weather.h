@@ -32,6 +32,10 @@ class RFM6xWeather : public RH_RF69
   
   // protected:
   void readFifo() override;
+
+ protected:
+  uint8_t _crc8( uint8_t *addr, uint8_t len);
+  bool CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN]);
 };
 
 
