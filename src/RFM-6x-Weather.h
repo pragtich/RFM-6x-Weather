@@ -4,7 +4,6 @@
 //
 
 
-
 #ifndef RFM6xWEATHER_h
 #define RFM6xWEATHER_h
 
@@ -17,12 +16,23 @@
 #define RFM6xW_PACKET_LEN 9
 #define RFM6xW_HEADER_LEN 0
 
+namespace RFM6xWeather {
+  class Observation {
+  public:
+    Observation(uint8_t buffer[RFM6xW_PACKET_LEN]);
+    uint8_t ID = 0;
+    float temp = 0.0;
+    float wind = 0.0;
+    float gust = 0.0;
+    uint8_t RH = 0;
+    float rain = 0.0;
+  };
 
 
-class RFM6xWeather : public RH_RF69
+class Receiver : public RH_RF69
 {
  public:
- RFM6xWeather(uint8_t slaveSelectPin = SS, uint8_t interruptPin = 2, RHGenericSPI& spi = hardware_spi)
+ Receiver(uint8_t slaveSelectPin = SS, uint8_t interruptPin = 2, RHGenericSPI& spi = hardware_spi)
    : RH_RF69(slaveSelectPin, interruptPin, spi)
     {
     };
@@ -39,6 +49,6 @@ class RFM6xWeather : public RH_RF69
 };
 
 
-
+};
 
 #endif

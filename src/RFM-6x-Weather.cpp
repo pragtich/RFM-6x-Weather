@@ -1,12 +1,36 @@
 
 #include <RFM-6x-Weather.h>
 
+/* Constructor for the Observation object. This does the conversion from the raw packets to the data 
+
+*/
+
+RFM6xWeather::Observation::Observation(uint8_t buffer[RFM6xW_PACKET_LEN]){
+  uint16_t bintemp;
+  
+  if ((buffer[0]&0xf0)>>4 == 5) {
+    ID = (buffer[0]&0x0f)<<4 | (buffer[1]&0xf0)>>4;
+    bintemp = ((buffer[1]&0x07)<<8 | buffer[2]);
+    
+    temp = bintemp / 10.0;
+    if (buffer[1]&0x80) {
+      temp = -temp;
+    }
+    RH = buffer[3];
+    wind = buffer[4] * 0.34; //Or is it 1.22?
+    gust = buffer[5] * 0.34;
+    rain = ((buffer[6]<<8 | buffer[7]) - 0x030c) * 0.3;
+  } else {
+    Serial.println("Created empty observation from unknown packet format");
+  }
+}
+
 /*
 * Function taken from Luc Small (http://lucsmall.com), itself
 * derived from the OneWire Arduino library. Modifications to
 * the polynomial according to Fine Offset's CRC8 calulations.
 */
-uint8_t RFM6xWeather::_crc8( uint8_t *addr, uint8_t len)
+uint8_t RFM6xWeather::Receiver::_crc8( uint8_t *addr, uint8_t len)
 {
 	uint8_t crc = 0;
 
@@ -24,7 +48,7 @@ uint8_t RFM6xWeather::_crc8( uint8_t *addr, uint8_t len)
 	return crc;
 }
 
-bool RFM6xWeather::CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN])
+bool RFM6xWeather::Receiver::CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN])
 {
   bool match;
 
@@ -42,7 +66,7 @@ bool RFM6xWeather::CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN])
 // I want fixed packet length, and am not using in-payload addressing (only the 2dd4)
 //
 //TODO: why is all the SPI stuff hard coded here? 
-void RFM6xWeather::readFifo()
+ void RFM6xWeather::Receiver::readFifo()
 {
     ATOMIC_BLOCK_START;
     digitalWrite(_slaveSelectPin, LOW); // TODO: is this required? Does SPI not dot this?
@@ -65,9 +89,7 @@ void RFM6xWeather::readFifo()
     // Any junk remaining in the FIFO will be cleared next time we go to receive mode.
 }
 
-
-
-bool RFM6xWeather::init()
+ bool RFM6xWeather::Receiver::init()
 {
   Serial.println("init");
   if (!RH_RF69::init())
@@ -86,7 +108,7 @@ bool RFM6xWeather::init()
   return true;
 }
 
-void RFM6xWeather::handleInterrupt()
+ void RFM6xWeather::Receiver::handleInterrupt()
 {
     // Get the interrupt cause
     uint8_t irqflags2 = spiRead(RH_RF69_REG_28_IRQFLAGS2);

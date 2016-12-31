@@ -6,7 +6,7 @@
 #define RFM_CS 15
 #define LEDPIN 2
 
-RFM6xWeather rfm(15, RFM_INT, hardware_spi);
+RFM6xWeather::Receiver rfm(15, RFM_INT, hardware_spi);
 
 uint8_t buffer[RFM6xW_PACKET_LEN], n;
 
