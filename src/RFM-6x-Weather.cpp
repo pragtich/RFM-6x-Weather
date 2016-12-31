@@ -59,6 +59,14 @@ bool RFM6xWeather::Receiver::CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN])
   return match;
 }
 
+// Determines weither a packet is an observation type (i.e., not a time packet)
+bool RFM6xWeather::Receiver::is_observation(uint8_t *buffer) {
+  if (buffer[0] & 0xf0 == 0x50)
+    return true;
+  else
+    return false;
+}
+
 
 // Override of the existing readFifo
 //
@@ -81,7 +89,14 @@ bool RFM6xWeather::Receiver::CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN])
       _buf[_bufLen] = _spi.transfer(0);
     if(CRC_ok(_buf)){
       _rxGood++;
-      _rxBufValid = true;
+      if (is_observation(_buf)){
+	if (callback_obs){
+	  Observation *obs = new Observation(_buf);
+	  callback_obs(obs);
+	} else {
+	  _rxBufValid = true;
+	}
+      }
     }
 
     digitalWrite(_slaveSelectPin, HIGH);
@@ -130,4 +145,10 @@ bool RFM6xWeather::Receiver::CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN])
 	// Save it in our buffer
 	readFifo();
     }
+}
+
+void RFM6xWeather::Receiver::set_observation_handler(void (*handler)(Observation*)){
+  if (handler){
+    callback_obs = handler;
+  }
 }

@@ -39,11 +39,14 @@ class Receiver : public RH_RF69
   
   bool init() override;
   void handleInterrupt() override;
-  
-  // protected:
   void readFifo() override;
 
+  void set_observation_handler(void (*handler)(Observation*));
+  
  protected:
+  void (*callback_obs)(Observation*) = NULL;
+
+  bool is_observation(uint8_t *buffer);
   uint8_t _crc8( uint8_t *addr, uint8_t len);
   bool CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN]);
 };
