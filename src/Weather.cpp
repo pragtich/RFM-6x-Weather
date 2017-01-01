@@ -37,11 +37,9 @@ void observed(RFM6xWeather::Observation *obs) {
   
   PRINT_WITH_UNIT("ID:", obs->ID);
 
-  Serial.print(obs->temp);
-  Serial.println("℃");
-  Serial.print(obs->RH);
-  Serial.println("%");
-  PRINT_WITH_UNIT(obs->rain, "mm");
+  PRINT_WITH_UNIT(obs->temp, " ℃");
+  PRINT_WITH_UNIT(obs->RH, " %");
+  PRINT_WITH_UNIT(obs->rain, " mm");
   delete obs;
 }
 
