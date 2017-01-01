@@ -13,13 +13,13 @@ RFM6xWeather::Observation::Observation(uint8_t buffer[RFM6xW_PACKET_LEN]){
     bintemp = ((buffer[1]&0x07)<<8 | buffer[2]);
     
     temp = bintemp / 10.0;
-    if (buffer[1]&0x80) {
+    if (buffer[1]&0x08) {
       temp = -temp;
     }
     RH = buffer[3];
     wind = buffer[4] * 0.34; //Or is it 1.22?
     gust = buffer[5] * 0.34;
-    rain = ((buffer[6]<<8 | buffer[7]) - 0x030c) * 0.3;
+    rain = ((buffer[6]<<8 | buffer[7]) - 0x030c) * 0.03;
   } else {
     Serial.println("Created empty observation from unknown packet format");
   }
@@ -61,7 +61,7 @@ bool RFM6xWeather::Receiver::CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN])
 
 // Determines weither a packet is an observation type (i.e., not a time packet)
 bool RFM6xWeather::Receiver::is_observation(uint8_t *buffer) {
-  if (buffer[0] & 0xf0 == 0x50)
+  if ((buffer[0] & 0xf0)>>4 == 0x5)
     return true;
   else
     return false;

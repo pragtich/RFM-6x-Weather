@@ -1,10 +1,14 @@
 
-
 #include <RFM-6x-Weather.h>
 //D1 = GPIO5
 #define RFM_INT 5
 #define RFM_CS 15
 #define LEDPIN 2
+
+#define PRINT_WITH_UNIT(a, b) {\
+    Serial.print(a); \
+    Serial.println(b);\
+  }
 
 RFM6xWeather::Receiver rfm(15, RFM_INT, hardware_spi);
 
@@ -21,11 +25,26 @@ void PrintHex8(uint8_t *data, uint8_t length) // prints 8-bit data in hex with l
        }
 }
 
+
 /*
 void myisr(void){
   rfm.handleInterrupt();
 }
 */
+
+void observed(RFM6xWeather::Observation *obs) {
+  Serial.println("Observed weather:");
+  
+  PRINT_WITH_UNIT("ID:", obs->ID);
+
+  Serial.print(obs->temp);
+  Serial.println("℃");
+  Serial.print(obs->RH);
+  Serial.println("%");
+  PRINT_WITH_UNIT(obs->rain, "mm");
+  delete obs;
+}
+
 
 void setup()
 {
@@ -34,12 +53,7 @@ void setup()
      Serial.println("Error initializing rfm");
    else
     Serial.println("RFM initialized OK");
-   Serial.println(SS);
-   pinMode(LEDPIN, OUTPUT);
-   digitalWrite(LEDPIN, LOW);
-   delay(1000);
-   digitalWrite(LEDPIN, HIGH);
-   // attachInterrupt(RFM_INT, &myisr, RISING);
+   rfm.set_observation_handler(observed);
 }
 
 
