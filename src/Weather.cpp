@@ -1,5 +1,12 @@
 
 #include <RFM-6x-Weather.h>
+
+#include <ESP8266WiFi.h>          //ESP8266 Core WiFi Library 
+#include <DNSServer.h>            //Local DNS Server used for redirecting all requests to the configuration portal
+#include <ESP8266WebServer.h>     //Local WebServer used to serve the configuration portal
+#include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
+
+
 //D1 = GPIO5
 #define RFM_INT 5
 #define RFM_CS 15
@@ -9,6 +16,7 @@
     Serial.print(a); \
     Serial.println(b);\
   }
+
 
 RFM6xWeather::Receiver rfm(15, RFM_INT, hardware_spi);
 
@@ -52,7 +60,13 @@ void setup()
    else
     Serial.println("RFM initialized OK");
    rfm.set_observation_handler(observed);
+
+
+   WiFiManager wifiManager;
+   wifiManager.autoConnect("ESP", "ESPconfig!");
+   Serial.println("connected to WiFi");
 }
+
 
 
 void loop(){
