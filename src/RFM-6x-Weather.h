@@ -16,6 +16,8 @@
 #define RFM6xW_PACKET_LEN 9
 #define RFM6xW_HEADER_LEN 0
 
+void PrintHex8(uint8_t *data, uint8_t length);
+
 namespace RFM6xWeather {
   class Observation {
   public:

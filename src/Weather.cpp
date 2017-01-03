@@ -1,11 +1,8 @@
+#include <ESP8266WiFi.h>
 
 #include <RFM-6x-Weather.h>
 
-#include <ESP8266WiFi.h>          //ESP8266 Core WiFi Library 
-#include <DNSServer.h>            //Local DNS Server used for redirecting all requests to the configuration portal
-#include <ESP8266WebServer.h>     //Local WebServer used to serve the configuration portal
-#include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
-
+#include "secret.h" 		// Contains the stuff that I don't want on github
 
 //D1 = GPIO5
 #define RFM_INT 5
@@ -21,18 +18,6 @@
 RFM6xWeather::Receiver rfm(15, RFM_INT, hardware_spi);
 
 uint8_t buffer[RFM6xW_PACKET_LEN], n;
-
-// https://forum.arduino.cc/index.php?topic=38107.0
-void PrintHex8(uint8_t *data, uint8_t length) // prints 8-bit data in hex with leading zeroes
-{
-       Serial.print("0x");
-       for (int i=0; i<length; i++) {
-         if (data[i]<0x10) {Serial.print("0");}
-         Serial.print(data[i],HEX);
-         Serial.print(" ");
-       }
-}
-
 
 /*
 void myisr(void){
@@ -55,16 +40,26 @@ void observed(RFM6xWeather::Observation *obs) {
 void setup()
 {
   Serial.begin(115200);
-   if (!rfm.init())
+  
+   WiFi.begin(SSID, PASS);
+   Serial.print("Connecting WiFi");
+   while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println();
+
+  Serial.print("Connected, IP address: ");
+  Serial.println(WiFi.localIP());
+
+
+  if (!rfm.init())
      Serial.println("Error initializing rfm");
    else
     Serial.println("RFM initialized OK");
    rfm.set_observation_handler(observed);
 
-
-   WiFiManager wifiManager;
-   wifiManager.autoConnect("ESP", "ESPconfig!");
-   Serial.println("connected to WiFi");
 }
 
 

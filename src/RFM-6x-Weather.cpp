@@ -1,6 +1,18 @@
 
 #include <RFM-6x-Weather.h>
 
+
+// https://forum.arduino.cc/index.php?topic=38107.0
+void PrintHex8(uint8_t *data, uint8_t length) // prints 8-bit data in hex with leading zeroes
+{
+       Serial.print("0x");
+       for (int i=0; i<length; i++) {
+         if (data[i]<0x10) {Serial.print("0");}
+         Serial.print(data[i],HEX);
+         Serial.print(" ");
+       }
+}
+
 /* Constructor for the Observation object. This does the conversion from the raw packets to the data 
 
 */
@@ -48,6 +60,9 @@ uint8_t RFM6xWeather::Receiver::_crc8( uint8_t *addr, uint8_t len)
 	return crc;
 }
 
+
+
+
 bool RFM6xWeather::Receiver::CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN])
 {
   bool match;
@@ -55,6 +70,7 @@ bool RFM6xWeather::Receiver::CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN])
   match = _crc8(buffer, RFM6xW_PACKET_LEN-1) == buffer[RFM6xW_PACKET_LEN-1];
   if (!match) {
     Serial.println("Non-matching CRC");
+    PrintHex8(buffer, RFM6xW_PACKET_LEN);
   };
   return match;
 }
