@@ -26,3 +26,4 @@
 *.app
 .piolibdeps
 .gcc-flags.json
+/src/secret.h
