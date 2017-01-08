@@ -10,8 +10,6 @@
 #include <RH_RF69.h>
 
 
-
-
 /* Constants */
 
 // TODO: come up with a smarter way to choose packet length and handle multiple lengths
@@ -22,27 +20,36 @@
 
 
 
-/* Class Observation */
 
 namespace RFM6xWeather {
 
   /* Helper functions */
-
-
   void PrintHex8(uint8_t *data, uint8_t length);
 
+  /* Class Message */
+  class Message {
+  public:
+    static Message* make_message(uint8_t *buffer);
+    uint8_t ID = 0;
 
-  class Observation {
+    virtual ~Message(){};
+  private:
+    static uint8_t _crc8( uint8_t *addr, uint8_t len);
+    static bool CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN], uint8_t len);
+    
+
+  };
+
+  /* Class Observation */
+  class Observation: public Message {
   public:
     Observation(uint8_t buffer[RFM6xW_PACKET_LEN]);
-    uint8_t ID = 0;
     float temp = 0.0;
     float wind = 0.0;
     float gust = 0.0;
     uint8_t RH = 0;
     float rain = 0.0;
   };
-
 
   /* Class Receiver */
   
@@ -62,10 +69,9 @@ class Receiver : public RH_RF69
   
  protected:
   void (*callback_obs)(Observation*) = NULL;
+  Message *pmessage = NULL;
 
   bool is_observation(uint8_t *buffer);
-  uint8_t _crc8( uint8_t *addr, uint8_t len);
-  bool CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN]);
 };
 
 

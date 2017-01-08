@@ -13,6 +13,69 @@ void RFM6xWeather::PrintHex8(uint8_t *data, uint8_t length) // prints 8-bit data
        }
 }
 
+/* Message class.
+   Encapsulates generic message properties and the factory make_message */
+
+/*
+* Function taken from Luc Small (http://lucsmall.com), itself
+* derived from the OneWire Arduino library. Modifications to
+* the polynomial according to Fine Offset's CRC8 calulations.
+*/
+uint8_t RFM6xWeather::Message::_crc8( uint8_t *addr, uint8_t len)
+{
+	uint8_t crc = 0;
+
+	// Indicated changes are from reference CRC-8 function in OneWire library
+	while (len--) {
+		uint8_t inbyte = *addr++;
+		uint8_t i;
+		for (i = 8; i; i--) {
+			uint8_t mix = (crc ^ inbyte) & 0x80; // changed from & 0x01
+			crc <<= 1; // changed from right shift
+			if (mix) crc ^= 0x31;// changed from 0x8C;
+			inbyte <<= 1; // changed from right shift
+		}
+	}
+	return crc;
+}
+
+
+
+
+bool RFM6xWeather::Message::CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN], uint8_t len)
+{
+  bool match;
+
+  match = _crc8(buffer, len-1) == buffer[len-1];
+  if (!match) {
+    Serial.println("Non-matching CRC");
+    PrintHex8(buffer, RFM6xW_PACKET_LEN);
+  };
+  return match;
+}
+
+
+RFM6xWeather::Message* RFM6xWeather::Message::make_message(uint8_t *buffer) {
+  switch (buffer[0]&0xF0){
+  case 0x50:
+    if (CRC_ok(buffer, 9)) {
+      Serial.println("Got an observation packet");
+      return(new Observation(buffer));
+    }
+    break;
+  case 0x60:
+    if (CRC_ok(buffer, 9)) {
+      //return(new Timesignal(buffer));
+    }
+    break;
+  }
+  Serial.println("Got an invalid packet:");
+  RFM6xWeather::PrintHex8(buffer, RFM6xW_PACKET_LEN);
+  return NULL;
+}
+  
+
+
 /* Constructor for the Observation object. This does the conversion from the raw packets to the data 
 
 */
@@ -37,43 +100,6 @@ RFM6xWeather::Observation::Observation(uint8_t buffer[RFM6xW_PACKET_LEN]){
   }
 }
 
-/*
-* Function taken from Luc Small (http://lucsmall.com), itself
-* derived from the OneWire Arduino library. Modifications to
-* the polynomial according to Fine Offset's CRC8 calulations.
-*/
-uint8_t RFM6xWeather::Receiver::_crc8( uint8_t *addr, uint8_t len)
-{
-	uint8_t crc = 0;
-
-	// Indicated changes are from reference CRC-8 function in OneWire library
-	while (len--) {
-		uint8_t inbyte = *addr++;
-		uint8_t i;
-		for (i = 8; i; i--) {
-			uint8_t mix = (crc ^ inbyte) & 0x80; // changed from & 0x01
-			crc <<= 1; // changed from right shift
-			if (mix) crc ^= 0x31;// changed from 0x8C;
-			inbyte <<= 1; // changed from right shift
-		}
-	}
-	return crc;
-}
-
-
-
-
-bool RFM6xWeather::Receiver::CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN])
-{
-  bool match;
-
-  match = _crc8(buffer, RFM6xW_PACKET_LEN-1) == buffer[RFM6xW_PACKET_LEN-1];
-  if (!match) {
-    Serial.println("Non-matching CRC");
-    PrintHex8(buffer, RFM6xW_PACKET_LEN);
-  };
-  return match;
-}
 
 // Determines weither a packet is an observation type (i.e., not a time packet)
 bool RFM6xWeather::Receiver::is_observation(uint8_t *buffer) {
@@ -103,7 +129,7 @@ bool RFM6xWeather::Receiver::is_observation(uint8_t *buffer) {
     // And now the real payload
     for (_bufLen = 0; _bufLen < (payloadlen); _bufLen++)
       _buf[_bufLen] = _spi.transfer(0);
-    if(CRC_ok(_buf)){
+    /*    if(CRC_ok(_buf)){
       _rxGood++;
       if (is_observation(_buf)){
 	if (callback_obs){
@@ -112,8 +138,17 @@ bool RFM6xWeather::Receiver::is_observation(uint8_t *buffer) {
 	} else {
 	  _rxBufValid = true;
 	}
-      }
+	}
+	}*/
+    pmessage = RFM6xWeather::Observation::make_message(_buf);
+    if (pmessage = dynamic_cast<RFM6xWeather::Observation*> (pmessage)) {
+      Serial.println("Got message");
+      delete pmessage;
     }
+    else {
+      Serial.println("No message");
+    }
+    
 
     digitalWrite(_slaveSelectPin, HIGH);
     ATOMIC_BLOCK_END;
