@@ -3,7 +3,7 @@
 
 
 // https://forum.arduino.cc/index.php?topic=38107.0
-void PrintHex8(uint8_t *data, uint8_t length) // prints 8-bit data in hex with leading zeroes
+void RFM6xWeather::PrintHex8(uint8_t *data, uint8_t length) // prints 8-bit data in hex with leading zeroes
 {
        Serial.print("0x");
        for (int i=0; i<length; i++) {

@@ -69,7 +69,7 @@ void loop(){
   if (rfm.available()){
     n = sizeof(buffer);
     if(rfm.recv(buffer, &n)) {
-      PrintHex8(buffer, n);
+      //      PrintHex8(buffer, n);
       Serial.println();
     } else {
       Serial.println("Problem reading packet");

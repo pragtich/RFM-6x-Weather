@@ -10,15 +10,28 @@
 #include <RH_RF69.h>
 
 
+
+
+/* Constants */
+
 // TODO: come up with a smarter way to choose packet length and handle multiple lengths
 // Somehow choose the longest packet length and use the CRC or first byte to
 // identify any incoming packets.
 #define RFM6xW_PACKET_LEN 9
 #define RFM6xW_HEADER_LEN 0
 
-void PrintHex8(uint8_t *data, uint8_t length);
+
+
+/* Class Observation */
 
 namespace RFM6xWeather {
+
+  /* Helper functions */
+
+
+  void PrintHex8(uint8_t *data, uint8_t length);
+
+
   class Observation {
   public:
     Observation(uint8_t buffer[RFM6xW_PACKET_LEN]);
@@ -31,6 +44,8 @@ namespace RFM6xWeather {
   };
 
 
+  /* Class Receiver */
+  
 class Receiver : public RH_RF69
 {
  public:
