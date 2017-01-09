@@ -25,7 +25,7 @@ void myisr(void){
 }
 */
 
-void observed(RFM6xWeather::Observation *obs) {
+void observed(struct RFM6xWeather::WeatherMessage *obs) {
   Serial.println("Observed weather:");
   
   PRINT_WITH_UNIT("ID:", obs->ID);

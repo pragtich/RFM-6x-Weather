@@ -1,6 +1,10 @@
 
 #include <RFM-6x-Weather.h>
+#include <stdint.h>
 
+int RFM6xWeather::BCD2int(uint16_t b){
+  return 10*((b & 0xf0) >> 4)+ (b & 0x0f);
+}
 
 // https://forum.arduino.cc/index.php?topic=38107.0
 void RFM6xWeather::PrintHex8(uint8_t *data, uint8_t length) // prints 8-bit data in hex with leading zeroes
@@ -13,15 +17,19 @@ void RFM6xWeather::PrintHex8(uint8_t *data, uint8_t length) // prints 8-bit data
        }
 }
 
-/* Message class.
-   Encapsulates generic message properties and the factory make_message */
+bool RFM6xWeather::CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN], uint8_t len)
+{
+  bool match;
 
-/*
-* Function taken from Luc Small (http://lucsmall.com), itself
-* derived from the OneWire Arduino library. Modifications to
-* the polynomial according to Fine Offset's CRC8 calulations.
-*/
-uint8_t RFM6xWeather::Message::_crc8( uint8_t *addr, uint8_t len)
+  match = _crc8(buffer, len-1) == buffer[len-1];
+  if (!match) {
+    Serial.println("Non-matching CRC");
+    PrintHex8(buffer, RFM6xW_PACKET_LEN);
+  };
+  return match;
+}
+
+uint8_t RFM6xWeather::_crc8( uint8_t *addr, uint8_t len)
 {
 	uint8_t crc = 0;
 
@@ -39,9 +47,85 @@ uint8_t RFM6xWeather::Message::_crc8( uint8_t *addr, uint8_t len)
 	return crc;
 }
 
+/* WeatherMessage class */
+/*
+RFM6xWeather::WeatherMessage(uint8_t buffer[RFM6xW_PACKET_LEN]){
+  uint16_t bintemp;
+    
+  ID = (buffer[0]&0x0f)<<4 | (buffer[1]&0xf0)>>4;
+  bintemp = ((buffer[1]&0x07)<<8 | buffer[2]);
+  
+  temp = bintemp / 10.0;
+  if (buffer[1]&0x08) {
+    temp = -temp;
+  }
+
+  RH = buffer[3];
+  wind = buffer[4] * 0.34; //Or is it 1.22?
+  gust = buffer[5] * 0.34;
+  rain = ((buffer[6]<<8 | buffer[7]) - 0x030c) * 0.03;
+  
+}*/
+
+/* Message class.
+   Encapsulates generic message properties and the factory from_buffer */
+/*union RFM6xWeather::Receiver *from_buffer(uint8_t buffer[RFM6xW_PACKET_LEN]){
+  RFM6xWeather::Message *pmess;
+  
+  switch (buffer[0]&0xF0) {
+  case 0x50:			// Alecto WS_3000 weather
+    if (RFM6xWeather::CRC_ok(buffer, 9)){
+      pmess = new RFM6xWeather::Message;
+      uint16_t bintemp;
+    
+      pmess->w.ID = (buffer[0]&0x0f)<<4 | (buffer[1]&0xf0)>>4;
+      bintemp = ((buffer[1]&0x07)<<8 | buffer[2]);
+  
+      pmess->w.temp = bintemp / 10.0;
+      if (buffer[1]&0x08) {
+	pmess->w.temp = -pmess->w.temp;
+      }
+
+      pmess->w.RH = buffer[3];
+      pmess->w.wind = buffer[4] * 0.34; //Or is it 1.22?
+      pmess->w.gust = buffer[5] * 0.34;
+      pmess->w.rain = ((buffer[6]<<8 | buffer[7]) - 0x030c) * 0.03;
+    }
+    return pmess;
+    break;
+  case 0x60:			// Alecto WS_3000 time
+    break;
+  default:
+    return NULL;
+  }
+  }*/
 
 
+/*
+* Function taken from Luc Small (http://lucsmall.com), itself
+* derived from the OneWire Arduino library. Modifications to
+* the polynomial according to Fine Offset's CRC8 calulations.
+*/
+/*
+uint8_t RFM6xWeather::Message::_crc8( uint8_t *addr, uint8_t len)
+{
+	uint8_t crc = 0;
 
+	// Indicated changes are from reference CRC-8 function in OneWire library
+	while (len--) {
+		uint8_t inbyte = *addr++;
+		uint8_t i;
+		for (i = 8; i; i--) {
+			uint8_t mix = (crc ^ inbyte) & 0x80; // changed from & 0x01
+			crc <<= 1; // changed from right shift
+			if (mix) crc ^= 0x31;// changed from 0x8C;
+			inbyte <<= 1; // changed from right shift
+		}
+	}
+	return crc;
+}
+*/
+ /*
 bool RFM6xWeather::Message::CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN], uint8_t len)
 {
   bool match;
@@ -53,8 +137,8 @@ bool RFM6xWeather::Message::CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN], uint8_t le
   };
   return match;
 }
-
-
+ */
+  /*
 RFM6xWeather::Message* RFM6xWeather::Message::make_message(uint8_t *buffer) {
   switch (buffer[0]&0xF0){
   case 0x50:
@@ -73,13 +157,13 @@ RFM6xWeather::Message* RFM6xWeather::Message::make_message(uint8_t *buffer) {
   RFM6xWeather::PrintHex8(buffer, RFM6xW_PACKET_LEN);
   return NULL;
 }
-  
+  */
 
 
 /* Constructor for the Observation object. This does the conversion from the raw packets to the data 
 
 */
-
+  /*
 RFM6xWeather::Observation::Observation(uint8_t buffer[RFM6xW_PACKET_LEN]){
   uint16_t bintemp;
   
@@ -99,8 +183,8 @@ RFM6xWeather::Observation::Observation(uint8_t buffer[RFM6xW_PACKET_LEN]){
     Serial.println("Created empty observation from unknown packet format");
   }
 }
-
-
+  */
+  
 // Determines weither a packet is an observation type (i.e., not a time packet)
 bool RFM6xWeather::Receiver::is_observation(uint8_t *buffer) {
   if ((buffer[0] & 0xf0)>>4 == 0x5)
@@ -108,7 +192,7 @@ bool RFM6xWeather::Receiver::is_observation(uint8_t *buffer) {
   else
     return false;
 }
-
+  
 
 // Override of the existing readFifo
 //
@@ -129,27 +213,19 @@ bool RFM6xWeather::Receiver::is_observation(uint8_t *buffer) {
     // And now the real payload
     for (_bufLen = 0; _bufLen < (payloadlen); _bufLen++)
       _buf[_bufLen] = _spi.transfer(0);
-    /*    if(CRC_ok(_buf)){
-      _rxGood++;
-      if (is_observation(_buf)){
-	if (callback_obs){
-	  Observation *obs = new Observation(_buf);
-	  callback_obs(obs);
-	} else {
-	  _rxBufValid = true;
+
+    if (decode_message(_buf, &the_message)){
+      if (the_message.type == WEATHER){
+	if (callback_weather){
+	  (*callback_weather)(the_message.pmessage.w);
 	}
-	}
-	}*/
-    pmessage = RFM6xWeather::Observation::make_message(_buf);
-    if (pmessage = dynamic_cast<RFM6xWeather::Observation*> (pmessage)) {
-      Serial.println("Got message");
-      delete pmessage;
-    }
-    else {
-      Serial.println("No message");
+      }
+      
+    } else {
+      Serial.println("unsuccessful decode");
+      the_message.type = NONE;
     }
     
-
     digitalWrite(_slaveSelectPin, HIGH);
     ATOMIC_BLOCK_END;
     // Any junk remaining in the FIFO will be cleared next time we go to receive mode.
@@ -161,6 +237,8 @@ bool RFM6xWeather::Receiver::is_observation(uint8_t *buffer) {
   if (!RH_RF69::init())
     return false;
 
+  the_message.type = NONE;
+  
   const ModemConfig config = {0x00, 0x07, 0x44, 0x0, 0x0, 1<<4|2|1<<6, 0x8b, 1<<3};
   const uint8_t syncwords[3] = {0xaa, 0x2d, 0xd4};
   
@@ -198,8 +276,83 @@ bool RFM6xWeather::Receiver::is_observation(uint8_t *buffer) {
     }
 }
 
-void RFM6xWeather::Receiver::set_observation_handler(void (*handler)(Observation*)){
+void RFM6xWeather::Receiver::set_observation_handler(void (*handler)(struct WeatherMessage*)){
   if (handler){
-    callback_obs = handler;
+    callback_weather = handler;
   }
+
 }
+/*
+DCF Time Message Format: 
+This is for Wh1080; WS-3000 is 1 byte shorter
+AAAABBBB BBBBCCCC DDEEEEEE FFFFFFFF GGGGGGGG HHHHHHHH IIIJJJJJ KKKKKKKK LMMMMMMM NNNNNNNN
+0        1        2        3        4        5        6        7        8        9
+Hours Minutes Seconds Year       MonthDay      ?      Checksum
+0xB4    0xFA    0x59    0x06    0x42    0x13    0x43    0x02    0x45    0x74
+
+with:
+AAAA = 1011    Message type: 0xB: DCF77 time stamp
+BBBBBBBB       Station ID / rolling code: Changes with battery insertion.
+CCCC           Unknown
+DD             Unknown
+EEEEEE         Hours, BCD
+FFFFFFFF       Minutes, BCD
+GGGGGGGG       Seconds, BCD
+HHHHHHHH       Year, last two digits, BCD
+III            Unknown
+JJJJJ          Month number, BCD
+KKKKKKKK       Day in month, BCD
+L              Unknown status bit
+MMMMMMM        Unknown
+NNNNNNNN       CRC8 - reverse Dallas One-wire CRC
+*/
+bool RFM6xWeather::Receiver::decode_message(uint8_t buffer[RFM6xW_PACKET_LEN], struct message *msg){
+  switch (buffer[0]&0xF0) {
+  case 0x50:
+
+    if (CRC_ok(buffer, 9)){
+      msg->type = WEATHER;
+      msg->pmessage.w = new struct WeatherMessage;
+
+      uint16_t bintemp;
+  
+      msg->pmessage.w->ID = (buffer[0]&0x0f)<<4 | (buffer[1]&0xf0)>>4;
+      bintemp = ((buffer[1]&0x07)<<8 | buffer[2]);
+    
+      msg->pmessage.w->temp = bintemp / 10.0;
+      if (buffer[1]&0x08) {
+	msg->pmessage.w->temp = -msg->pmessage.w->temp;
+      }
+      msg->pmessage.w->RH = buffer[3];
+      msg->pmessage.w->wind = buffer[4] * 0.34; //Or is it 1.22?
+      msg->pmessage.w->gust = buffer[5] * 0.34;
+      msg->pmessage.w->rain = ((buffer[6]<<8 | buffer[7]) - 0x030c) * 0.03;
+
+      return true;
+    }
+    
+    break;
+  case 0x60:
+    if (CRC_ok(buffer, 9)){
+      msg->type = TIME;
+      msg->pmessage.t = new struct TimeMessage;
+
+      msg->pmessage.t->ID = (buffer[0]&0x0f)<<4 | (buffer[1]&0xf0)>>4;
+      msg->pmessage.t->year = BCD2int(buffer[5]) + 2000;
+      msg->pmessage.t->month = BCD2int(buffer[6] & 0x1f);
+      msg->pmessage.t->day = BCD2int(buffer[7]);
+      msg->pmessage.t->hour = BCD2int(buffer[2] & 0x3F);
+      msg->pmessage.t->minute = BCD2int(buffer[3]);
+      msg->pmessage.t->second = BCD2int(buffer[4]);
+
+      return true;
+    }
+    break;
+    
+    
+  }
+  msg->type = NONE;
+  return false;
+}
+
+

@@ -24,10 +24,44 @@
 namespace RFM6xWeather {
 
   /* Helper functions */
+  int BCD2int(uint16_t b);
   void PrintHex8(uint8_t *data, uint8_t length);
+  bool CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN], uint8_t len);
+  uint8_t _crc8( uint8_t *addr, uint8_t len);
 
+
+  struct WeatherMessage {
+    uint8_t ID = 0;
+    float temp = 0.0;
+    float wind = 0.0;
+    float gust = 0.0;
+    uint8_t RH = 0;
+    float rain = 0.0;
+
+  };
+  
+  struct TimeMessage {
+    uint8_t ID = 0;
+    int year = 0;
+    uint8_t month = 0;
+    uint8_t day = 0;
+    uint8_t hour = 0;
+    uint8_t minute = 0;
+    uint8_t second = 0;
+  };
+
+  enum message_t {NONE, WEATHER, TIME};
+  union message_p {
+    struct WeatherMessage *w;
+    struct TimeMessage *t;
+  };
+  
+  struct message {
+    enum message_t type;
+    union message_p pmessage;
+  };
   /* Class Message */
-  class Message {
+  /*  class testMessage {
   public:
     static Message* make_message(uint8_t *buffer);
     uint8_t ID = 0;
@@ -36,12 +70,10 @@ namespace RFM6xWeather {
   private:
     static uint8_t _crc8( uint8_t *addr, uint8_t len);
     static bool CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN], uint8_t len);
-    
-
-  };
+    };*/
 
   /* Class Observation */
-  class Observation: public Message {
+  /*  class Observation: public Message {
   public:
     Observation(uint8_t buffer[RFM6xW_PACKET_LEN]);
     float temp = 0.0;
@@ -50,7 +82,7 @@ namespace RFM6xWeather {
     uint8_t RH = 0;
     float rain = 0.0;
   };
-
+  */
   /* Class Receiver */
   
 class Receiver : public RH_RF69
@@ -65,12 +97,13 @@ class Receiver : public RH_RF69
   void handleInterrupt() override;
   void readFifo() override;
 
-  void set_observation_handler(void (*handler)(Observation*));
+  void set_observation_handler(void (*handler)(struct WeatherMessage*));
   
  protected:
-  void (*callback_obs)(Observation*) = NULL;
-  Message *pmessage = NULL;
+  void (*callback_weather)(WeatherMessage*) = NULL;
+  struct message the_message;
 
+  bool decode_message(uint8_t buffer[RFM6xW_PACKET_LEN], struct message *msg);
   bool is_observation(uint8_t *buffer);
 };
 
