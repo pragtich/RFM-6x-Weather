@@ -73,6 +73,10 @@ uint8_t RFM6xWeather::_crc8( uint8_t *addr, uint8_t len)
 	if (callback_weather){
 	  (*callback_weather)(the_message.pmessage.w);
 	}
+      } else if (the_message.type == TIME){
+	if (callback_time){
+	  (*callback_time)(the_message.pmessage.t);
+	}
       }
       
     } else {
@@ -195,7 +199,9 @@ bool RFM6xWeather::Receiver::decode_message(uint8_t buffer[RFM6xW_PACKET_LEN], s
     }
     break;
   case 0x60:
+    Serial.println("Suspected time package");
     if (CRC_ok(buffer, 9)){
+      Serial.println("Got time package");
       msg->type = TIME;
       msg->pmessage.t = new struct TimeMessage;
 
@@ -211,6 +217,8 @@ bool RFM6xWeather::Receiver::decode_message(uint8_t buffer[RFM6xW_PACKET_LEN], s
     }
     break;
   }
+  Serial.println("Unrecognized packet");
+  RFM6xWeather::PrintHex8(buffer, 9);
   msg->type = NONE;
   return false;
 }
