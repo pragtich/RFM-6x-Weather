@@ -185,15 +185,6 @@ RFM6xWeather::Observation::Observation(uint8_t buffer[RFM6xW_PACKET_LEN]){
 }
   */
   
-// Determines weither a packet is an observation type (i.e., not a time packet)
-bool RFM6xWeather::Receiver::is_observation(uint8_t *buffer) {
-  if ((buffer[0] & 0xf0)>>4 == 0x5)
-    return true;
-  else
-    return false;
-}
-  
-
 // Override of the existing readFifo
 //
 // The existing function is hard-coded for variable packet length, and
@@ -276,12 +267,20 @@ bool RFM6xWeather::Receiver::is_observation(uint8_t *buffer) {
     }
 }
 
-void RFM6xWeather::Receiver::set_observation_handler(void (*handler)(struct WeatherMessage*)){
+
+void RFM6xWeather::Receiver::set_time_handler(void (*handler)(struct TimeMessage*)){
+  if (handler){
+    callback_time = handler;
+  }
+}
+
+
+void RFM6xWeather::Receiver::set_weather_handler(void (*handler)(struct WeatherMessage*)){
   if (handler){
     callback_weather = handler;
   }
-
 }
+
 /*
 DCF Time Message Format: 
 This is for Wh1080; WS-3000 is 1 byte shorter
@@ -330,7 +329,6 @@ bool RFM6xWeather::Receiver::decode_message(uint8_t buffer[RFM6xW_PACKET_LEN], s
 
       return true;
     }
-    
     break;
   case 0x60:
     if (CRC_ok(buffer, 9)){
@@ -348,8 +346,6 @@ bool RFM6xWeather::Receiver::decode_message(uint8_t buffer[RFM6xW_PACKET_LEN], s
       return true;
     }
     break;
-    
-    
   }
   msg->type = NONE;
   return false;

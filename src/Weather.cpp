@@ -1,4 +1,5 @@
 #include <ESP8266WiFi.h>
+#include <ESP8266WiFiSTA.h>
 
 #include <RFM-6x-Weather.h>
 
@@ -16,6 +17,7 @@
 
 
 RFM6xWeather::Receiver rfm(15, RFM_INT, hardware_spi);
+ESP8266WiFiSTAClass Station;
 
 uint8_t buffer[RFM6xW_PACKET_LEN], n;
 
@@ -25,7 +27,7 @@ void myisr(void){
 }
 */
 
-void observed(struct RFM6xWeather::WeatherMessage *obs) {
+void observed_w(struct RFM6xWeather::WeatherMessage *obs) {
   Serial.println("Observed weather:");
   
   PRINT_WITH_UNIT("ID:", obs->ID);
@@ -36,14 +38,26 @@ void observed(struct RFM6xWeather::WeatherMessage *obs) {
   delete obs;
 }
 
+void observed_t(struct RFM6xWeather::TimeMessage *obs) {
+  Serial.println("Got time stamp:");
+  
+  PRINT_WITH_UNIT("ID:", obs->ID);
+
+  Serial.printf("02d:02d on 02d-02d-04d\n", obs->hour, obs->minute, obs->day, obs->month, obs->year);
+  delete obs;
+}
+
 
 void setup()
 {
   Serial.begin(115200);
-  
-   WiFi.begin(SSID, PASS);
-   Serial.print("Connecting WiFi");
-   while (WiFi.status() != WL_CONNECTED)
+
+  if(!WiFi.enableAP(false)) {
+    Serial.println("Error disabling AP mode");
+  }
+  Station.begin(SSID, PASS);
+  Serial.print("Connecting WiFi");
+  while (Station.status() != WL_CONNECTED)
   {
     delay(500);
     Serial.print(".");
@@ -51,14 +65,15 @@ void setup()
   Serial.println();
 
   Serial.print("Connected, IP address: ");
-  Serial.println(WiFi.localIP());
+  Serial.println(Station.localIP());
 
 
   if (!rfm.init())
      Serial.println("Error initializing rfm");
    else
     Serial.println("RFM initialized OK");
-   rfm.set_observation_handler(observed);
+   rfm.set_weather_handler(observed_w);
+   rfm.set_time_handler(observed_t);
 
 }
 

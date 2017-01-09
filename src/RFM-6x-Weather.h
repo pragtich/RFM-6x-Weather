@@ -97,14 +97,15 @@ class Receiver : public RH_RF69
   void handleInterrupt() override;
   void readFifo() override;
 
-  void set_observation_handler(void (*handler)(struct WeatherMessage*));
+  void set_time_handler(void (*handler)(struct TimeMessage*));
+  void set_weather_handler(void (*handler)(struct WeatherMessage*));
   
  protected:
   void (*callback_weather)(WeatherMessage*) = NULL;
+  void (*callback_time)(TimeMessage*) = NULL;
   struct message the_message;
 
   bool decode_message(uint8_t buffer[RFM6xW_PACKET_LEN], struct message *msg);
-  bool is_observation(uint8_t *buffer);
 };
 
 
