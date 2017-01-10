@@ -11,7 +11,7 @@
 // Tested on miniWireless with RFM69 www.anarduino.com/miniwireless
 // Tested on Teensy 3.1 with RF69 on PJRC breakout board
 
-#include <SPI.h>
+#Include <SPI.h>
 #include <RH_RF69.h>
 
 // Singleton instance of the radio driver

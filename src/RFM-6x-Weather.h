@@ -77,7 +77,7 @@ class Receiver : public RH_RF69
    : RH_RF69(slaveSelectPin, interruptPin, spi)
     {
     };
-  void run();
+  void run(int t);
   
   bool init() override;
   void handleInterrupt() override;

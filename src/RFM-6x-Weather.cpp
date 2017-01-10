@@ -231,12 +231,13 @@ bool RFM6xWeather::Receiver::decode_message(uint8_t buffer[RFM6xW_PACKET_LEN], s
   return false;
 }
 
-void RFM6xWeather::Receiver::run(){
+void RFM6xWeather::Receiver::run(int t){
   uint8_t n, buffer[RFM6xW_PACKET_LEN];
   
   if (available()){
     n = sizeof(buffer);
     recv(buffer, &n);
+    delay(t);
   }
 }
     

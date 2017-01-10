@@ -102,5 +102,5 @@ void setup()
 
 
 void loop(){
-  rfm.run();
+  rfm.run(50);
 }
