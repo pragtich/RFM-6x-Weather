@@ -102,8 +102,5 @@ void setup()
 
 
 void loop(){
-  if (rfm.available()){
-    n = sizeof(buffer);
-    rfm.recv(buffer, &n);
-  }
+  rfm.run();
 }
