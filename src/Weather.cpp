@@ -64,7 +64,7 @@ void observed_u(struct RFM6xWeather::UnknownMessage *obs) {
   
   PRINT_WITH_UNIT("ID:", obs->ID);
 
-  RFM6xWeather::PrintHex8(obs->me, RFM6xW_PACKET_LEN);
+  RFM6xWeather::PrintHex8(obs->message, RFM6xW_PACKET_LEN);
   Serial.println();
   delete obs;
 }
@@ -103,16 +103,4 @@ void setup()
 
 void loop(){
 
-  if (rfm.available()){
-    n = sizeof(buffer);
-    if(rfm.recv(buffer, &n)) {
-      //      PrintHex8(buffer, n);
-      Serial.println();
-    } else {
-      Serial.println("Problem reading packet");
-    }
-  } else {
-    yield();
-  }
-  delay(1000);
 }
