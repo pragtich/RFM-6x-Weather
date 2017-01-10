@@ -114,7 +114,6 @@ uint8_t RFM6xWeather::_crc8( uint8_t *addr, uint8_t len)
 
  void RFM6xWeather::Receiver::handleInterrupt()
 {
-  Serial.println("int handling");
     // Get the interrupt cause
     uint8_t irqflags2 = spiRead(RH_RF69_REG_28_IRQFLAGS2);
     if (_mode == RHModeTx && (irqflags2 & RH_RF69_IRQFLAGS2_PACKETSENT))
@@ -182,7 +181,6 @@ MMMMMMM        Unknown
 NNNNNNNN       CRC8 - reverse Dallas One-wire CRC
 */
 bool RFM6xWeather::Receiver::decode_message(uint8_t buffer[RFM6xW_PACKET_LEN], struct message *msg){
-  Serial.println("decoding");
   switch (buffer[0]&0xF0) {
   case 0x50:
 
