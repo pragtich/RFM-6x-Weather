@@ -15,7 +15,7 @@
 // TODO: come up with a smarter way to choose packet length and handle multiple lengths
 // Somehow choose the longest packet length and use the CRC or first byte to
 // identify any incoming packets.
-#define RFM6xW_PACKET_LEN 9
+#define RFM6xW_PACKET_LEN 10
 #define RFM6xW_HEADER_LEN 0
 
 
@@ -30,6 +30,12 @@ namespace RFM6xWeather {
   uint8_t _crc8( uint8_t *addr, uint8_t len);
 
 
+  struct UnknownMessage {
+    uint8_t ID = 0;
+    uint8_t message[RFM6xW_PACKET_LEN];
+  };
+			 
+  
   struct WeatherMessage {
     uint8_t ID = 0;
     float temp = 0.0;
@@ -50,39 +56,18 @@ namespace RFM6xWeather {
     uint8_t second = 0;
   };
 
-  enum message_t {NONE, WEATHER, TIME};
+  enum message_t {NONE, WEATHER, TIME, UNKNOWN};
+  
   union message_p {
     struct WeatherMessage *w;
     struct TimeMessage *t;
+    struct UnknownMessage *u;
   };
   
   struct message {
     enum message_t type;
     union message_p pmessage;
   };
-  /* Class Message */
-  /*  class testMessage {
-  public:
-    static Message* make_message(uint8_t *buffer);
-    uint8_t ID = 0;
-
-    virtual ~Message(){};
-  private:
-    static uint8_t _crc8( uint8_t *addr, uint8_t len);
-    static bool CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN], uint8_t len);
-    };*/
-
-  /* Class Observation */
-  /*  class Observation: public Message {
-  public:
-    Observation(uint8_t buffer[RFM6xW_PACKET_LEN]);
-    float temp = 0.0;
-    float wind = 0.0;
-    float gust = 0.0;
-    uint8_t RH = 0;
-    float rain = 0.0;
-  };
-  */
   /* Class Receiver */
   
 class Receiver : public RH_RF69
@@ -99,10 +84,12 @@ class Receiver : public RH_RF69
 
   void set_time_handler(void (*handler)(struct TimeMessage*));
   void set_weather_handler(void (*handler)(struct WeatherMessage*));
+  void set_unknown_handler(void (*handler)(struct UnknownMessage*));
   
  protected:
   void (*callback_weather)(WeatherMessage*) = NULL;
   void (*callback_time)(TimeMessage*) = NULL;
+  void (*callback_unknown)(UnknownMessage*) = NULL;
   struct message the_message;
 
   bool decode_message(uint8_t buffer[RFM6xW_PACKET_LEN], struct message *msg);

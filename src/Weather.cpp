@@ -27,6 +27,18 @@ void myisr(void){
 }
 */
 
+void print_date(RFM6xWeather::TimeMessage *obs){
+  Serial.print(obs->hour);
+  Serial.print(":");
+  Serial.print(obs->minute);
+  Serial.print(" ");
+  Serial.print(obs->year);
+  Serial.print("-");
+  Serial.print(obs->month);
+  Serial.print("-");
+  Serial.println(obs->day);
+}
+
 void observed_w(struct RFM6xWeather::WeatherMessage *obs) {
   Serial.println("Observed weather:");
   
@@ -43,10 +55,19 @@ void observed_t(struct RFM6xWeather::TimeMessage *obs) {
   
   PRINT_WITH_UNIT("ID:", obs->ID);
 
-  Serial.printf("02d:02d on 02d-02d-04d\n", obs->hour, obs->minute, obs->day, obs->month, obs->year);
+  print_date(obs);
   delete obs;
 }
 
+void observed_u(struct RFM6xWeather::UnknownMessage *obs) {
+  Serial.println("Got Unknown message:");
+  
+  PRINT_WITH_UNIT("ID:", obs->ID);
+
+  RFM6xWeather::PrintHex8(obs->me, RFM6xW_PACKET_LEN);
+  Serial.println();
+  delete obs;
+}
 
 void setup()
 {
@@ -74,6 +95,7 @@ void setup()
     Serial.println("RFM initialized OK");
    rfm.set_weather_handler(observed_w);
    rfm.set_time_handler(observed_t);
+   rfm.set_unknown_handler(observed_u);
 
 }
 

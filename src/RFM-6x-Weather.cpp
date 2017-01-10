@@ -22,10 +22,6 @@ bool RFM6xWeather::CRC_ok(uint8_t buffer[RFM6xW_PACKET_LEN], uint8_t len)
   bool match;
 
   match = _crc8(buffer, len-1) == buffer[len-1];
-  if (!match) {
-    Serial.println("Non-matching CRC");
-    PrintHex8(buffer, RFM6xW_PACKET_LEN);
-  };
   return match;
 }
 
@@ -60,11 +56,8 @@ uint8_t RFM6xWeather::_crc8( uint8_t *addr, uint8_t len)
     digitalWrite(_slaveSelectPin, LOW); // TODO: is this required? Does SPI not dot this?
     _spi.transfer(RH_RF69_REG_00_FIFO); // Send the start address with the write mask off
     uint8_t payloadlen = RFM6xW_PACKET_LEN-RFM6xW_HEADER_LEN; // Use fixed packet length
-    // Get the rest of the headers
 
-    //_rxHeaderId    = _spi.transfer(0);  //Packet type in Finite Offset weather stations
-
-    // And now the real payload
+    /* Now read the entire buffer */
     for (_bufLen = 0; _bufLen < (payloadlen); _bufLen++)
       _buf[_bufLen] = _spi.transfer(0);
 
@@ -77,13 +70,16 @@ uint8_t RFM6xWeather::_crc8( uint8_t *addr, uint8_t len)
 	if (callback_time){
 	  (*callback_time)(the_message.pmessage.t);
 	}
-      }
+      } 
       
     } else {
-      Serial.println("unsuccessful decode");
-      RFM6xWeather::PrintHex8(_buf, _bufLen);
-      the_message.type = NONE;
+      if (the_message.type == UNKNOWN){
+	if (callback_unknown){
+	  (*callback_unknown)(the_message.pmessage.u);
+	}
+      }
     }
+    the_message.type = NONE;
     
     digitalWrite(_slaveSelectPin, HIGH);
     ATOMIC_BLOCK_END;
@@ -92,7 +88,6 @@ uint8_t RFM6xWeather::_crc8( uint8_t *addr, uint8_t len)
 
  bool RFM6xWeather::Receiver::init()
 {
-  Serial.println("init");
   if (!RH_RF69::init())
     return false;
 
@@ -149,6 +144,12 @@ void RFM6xWeather::Receiver::set_weather_handler(void (*handler)(struct WeatherM
   }
 }
 
+void RFM6xWeather::Receiver::set_unknown_handler(void (*handler)(struct UnknownMessage*)){
+  if (handler){
+    callback_unknown = handler;
+  }
+}
+
 /*
 DCF Time Message Format: 
 This is for Wh1080; WS-3000 is 1 byte shorter
@@ -199,9 +200,7 @@ bool RFM6xWeather::Receiver::decode_message(uint8_t buffer[RFM6xW_PACKET_LEN], s
     }
     break;
   case 0x60:
-    Serial.println("Suspected time package");
     if (CRC_ok(buffer, 9)){
-      Serial.println("Got time package");
       msg->type = TIME;
       msg->pmessage.t = new struct TimeMessage;
 
@@ -217,9 +216,10 @@ bool RFM6xWeather::Receiver::decode_message(uint8_t buffer[RFM6xW_PACKET_LEN], s
     }
     break;
   }
-  Serial.println("Unrecognized packet");
-  RFM6xWeather::PrintHex8(buffer, 9);
-  msg->type = NONE;
+
+  msg->type = UNKNOWN;
+  msg->pmessage.u->ID =  (buffer[0]&0x0f)<<4 | (buffer[1]&0xf0)>>4;
+  memcpy(msg->pmessage.u->message, buffer, RFM6xW_PACKET_LEN);
   return false;
 }
 
