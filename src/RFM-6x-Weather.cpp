@@ -218,6 +218,8 @@ bool RFM6xWeather::Receiver::decode_message(uint8_t buffer[RFM6xW_PACKET_LEN], s
   }
 
   msg->type = UNKNOWN;
+  msg->pmessage.u = new struct UnknownMessage;
+  
   msg->pmessage.u->ID =  (buffer[0]&0x0f)<<4 | (buffer[1]&0xf0)>>4;
   memcpy(msg->pmessage.u->message, buffer, RFM6xW_PACKET_LEN);
   return false;
