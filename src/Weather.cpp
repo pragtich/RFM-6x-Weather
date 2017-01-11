@@ -40,7 +40,8 @@ void print_date(RFM6xWeather::TimeMessage *obs){
 }
 
 void observed_w(struct RFM6xWeather::WeatherMessage *obs) {
-  Serial.println("Observed weather:");
+  Serial.print("Observed weather at t=");
+  Serial.println(millis());
   
   PRINT_WITH_UNIT("ID:", obs->ID);
 
@@ -102,5 +103,5 @@ void setup()
 
 
 void loop(){
-  rfm.run(50);
+  rfm.run();
 }

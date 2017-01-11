@@ -77,7 +77,7 @@ class Receiver : public RH_RF69
    : RH_RF69(slaveSelectPin, interruptPin, spi)
     {
     };
-  void run(int t);
+  void run(void);
   
   bool init() override;
   void handleInterrupt() override;
@@ -86,12 +86,17 @@ class Receiver : public RH_RF69
   void set_time_handler(void (*handler)(struct TimeMessage*));
   void set_weather_handler(void (*handler)(struct WeatherMessage*));
   void set_unknown_handler(void (*handler)(struct UnknownMessage*));
+
+  void set_min_time(int time);
   
  protected:
   void (*callback_weather)(WeatherMessage*) = NULL;
   void (*callback_time)(TimeMessage*) = NULL;
   void (*callback_unknown)(UnknownMessage*) = NULL;
   struct message the_message;
+  int mintime = 100;		/* minimal time between messages from same ID (ms) */
+  uint8_t _lastID = 0;
+  int _prelastPreambleTime = 0;
 
   bool decode_message(uint8_t buffer[RFM6xW_PACKET_LEN], struct message *msg);
 };

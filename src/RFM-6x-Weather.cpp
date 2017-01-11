@@ -63,18 +63,28 @@ uint8_t RFM6xWeather::_crc8( uint8_t *addr, uint8_t len)
 
     if (decode_message(_buf, &the_message)){
       if (the_message.type == WEATHER){
-	if (callback_weather){
-	  (*callback_weather)(the_message.pmessage.w);
+	if (_lastID != the_message.pmessage.w->ID || (millis()-_prelastPreambleTime > mintime)) {
+	  _lastID = the_message.pmessage.w->ID;
+	  if (callback_weather){
+	    (*callback_weather)(the_message.pmessage.w);
+	  } else {
+	    delete the_message.pmessage.w;
+	  }
 	} else {
 	  delete the_message.pmessage.w;
 	}
       } else if (the_message.type == TIME){
-	if (callback_time){
-	  (*callback_time)(the_message.pmessage.t);
+	if (_lastID != the_message.pmessage.t->ID || (millis()-_prelastPreambleTime > mintime)) {
+	  _lastID = the_message.pmessage.t->ID;
+	  if (callback_time){
+	    (*callback_time)(the_message.pmessage.t);
+	  } else {
+	    delete the_message.pmessage.t;
+	  }
 	} else {
 	  delete the_message.pmessage.t;
 	}
-      } 
+      }
       
     } else {
       if (the_message.type == UNKNOWN){
@@ -128,6 +138,7 @@ uint8_t RFM6xWeather::_crc8( uint8_t *addr, uint8_t len)
     {
 	// A complete message has been received 
 	_lastRssi = -((int8_t)(spiRead(RH_RF69_REG_24_RSSIVALUE) >> 1));
+	_prelastPreambleTime = _lastPreambleTime;
 	_lastPreambleTime = millis();
 
 	setModeIdle();
@@ -154,6 +165,10 @@ void RFM6xWeather::Receiver::set_unknown_handler(void (*handler)(struct UnknownM
   if (handler){
     callback_unknown = handler;
   }
+}
+
+void RFM6xWeather::Receiver::set_min_time(int time){
+  mintime = time;
 }
 
 /*
@@ -231,13 +246,12 @@ bool RFM6xWeather::Receiver::decode_message(uint8_t buffer[RFM6xW_PACKET_LEN], s
   return false;
 }
 
-void RFM6xWeather::Receiver::run(int t){
+void RFM6xWeather::Receiver::run(void){
   uint8_t n, buffer[RFM6xW_PACKET_LEN];
   
   if (available()){
     n = sizeof(buffer);
     recv(buffer, &n);
-    delay(t);
   }
 }
     
