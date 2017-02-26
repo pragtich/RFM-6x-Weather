@@ -3,7 +3,7 @@
 
 #include <RFM-6x-Weather.h>
 
-#include "secret.h" 		// Contains the stuff that I don't want on github
+#include "secret.h" 		// Contains the stuff that I don't want on github, SSID and PASS
 
 //D1 = GPIO5
 #define RFM_INT 5
@@ -42,7 +42,7 @@ void print_date(RFM6xWeather::TimeMessage *obs){
 void observed_w(struct RFM6xWeather::WeatherMessage *obs) {
   Serial.print("Observed weather at t=");
   Serial.println(millis());
-  
+
   PRINT_WITH_UNIT("ID:", obs->ID);
 
   PRINT_WITH_UNIT(obs->temp, " ℃");
@@ -53,7 +53,7 @@ void observed_w(struct RFM6xWeather::WeatherMessage *obs) {
 
 void observed_t(struct RFM6xWeather::TimeMessage *obs) {
   Serial.println("Got time stamp:");
-  
+
   PRINT_WITH_UNIT("ID:", obs->ID);
 
   print_date(obs);
@@ -62,7 +62,7 @@ void observed_t(struct RFM6xWeather::TimeMessage *obs) {
 
 void observed_u(struct RFM6xWeather::UnknownMessage *obs) {
   Serial.println("Got Unknown message:");
-  
+
   PRINT_WITH_UNIT("ID:", obs->ID);
 
   RFM6xWeather::PrintHex8(obs->message, RFM6xW_PACKET_LEN);
