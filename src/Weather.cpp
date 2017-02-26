@@ -1,5 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiSTA.h>
+#include <PubSubClient.h>
 
 #include <RFM-6x-Weather.h>
 
@@ -10,6 +11,8 @@
 #define RFM_CS 15
 #define LEDPIN 2
 
+const char* mqtt_server = "broker.mqtt-dashboard.com";
+
 #define PRINT_WITH_UNIT(a, b) {\
     Serial.print(a); \
     Serial.println(b);\
@@ -18,6 +21,8 @@
 
 RFM6xWeather::Receiver rfm(15, RFM_INT, hardware_spi);
 ESP8266WiFiSTAClass Station;
+WiFiClient espClient;
+PubSubClient mqtt(espClient);
 
 uint8_t buffer[RFM6xW_PACKET_LEN], n;
 
@@ -70,6 +75,50 @@ void observed_u(struct RFM6xWeather::UnknownMessage *obs) {
   delete obs;
 }
 
+void mqtt_callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.print("] ");
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]);
+  }
+  Serial.println();
+
+  // Switch on the LED if an 1 was received as first character
+  if ((char)payload[0] == '1') {
+    digitalWrite(BUILTIN_LED, LOW);   // Turn the LED on (Note that LOW is the voltage level
+    // but actually the LED is on; this is because
+    // it is acive low on the ESP-01)
+  } else {
+    digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage HIGH
+  }
+
+}
+
+void reconnect() {
+  // Loop until we're reconnected
+  while (!mqtt.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Create a random client ID
+    String clientId = "ESP8266Client-";
+    clientId += String(random(0xffff), HEX);
+    // Attempt to connect
+    if (mqtt.connect(clientId.c_str())) {
+      Serial.println("connected");
+      // Once connected, publish an announcement...
+      mqtt.publish("outTopic", "hello world");
+      // ... and resubscribe
+      mqtt.subscribe("inTopic");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(mqtt.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -98,10 +147,16 @@ void setup()
    rfm.set_time_handler(observed_t);
    rfm.set_unknown_handler(observed_u);
 
+   mqtt.setServer(mqtt_server, 1883);
+   mqtt.setCallback(mqtt_callback);
 }
 
 
 
 void loop(){
   rfm.run();
+  if (!mqtt.connected()) {
+    reconnect();
+  }
+  mqtt.loop();
 }
