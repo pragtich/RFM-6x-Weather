@@ -61,7 +61,9 @@ void observed_w(struct RFM6xWeather::WeatherMessage *obs) {
   String topic_T = topic + String("T");
   String msg_T = String(obs->temp);
   mqtt.publish(topic_T.c_str(), msg_T.c_str());
-  
+  /*String topic_RH = topic + String("RH");
+  String msg_RH = String(obs->RH);
+  mqtt.publish(topic_RH.c_str(), msg_RH.c_str());*/
   delete obs;
 }
 
