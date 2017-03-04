@@ -11,7 +11,10 @@
 #define RFM_CS 15
 #define LEDPIN 2
 
-const char* mqtt_server = "broker.mqtt-dashboard.com";
+const char* mqtt_server = "10.0.0.99";
+const char* weather_topic = "weather/";
+#define TOPIC_LEN 99
+char topic[TOPIC_LEN];
 
 #define PRINT_WITH_UNIT(a, b) {\
     Serial.print(a); \
@@ -53,6 +56,12 @@ void observed_w(struct RFM6xWeather::WeatherMessage *obs) {
   PRINT_WITH_UNIT(obs->temp, " ℃");
   PRINT_WITH_UNIT(obs->RH, " %");
   PRINT_WITH_UNIT(obs->rain, " mm");
+
+  String topic = String("weather/") + String(obs->ID, HEX) + String("/");
+  String topic_T = topic + String("T");
+  String msg_T = String(obs->temp);
+  mqtt.publish(topic_T.c_str(), msg_T.c_str());
+  
   delete obs;
 }
 
@@ -86,11 +95,11 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
 
   // Switch on the LED if an 1 was received as first character
   if ((char)payload[0] == '1') {
-    digitalWrite(BUILTIN_LED, LOW);   // Turn the LED on (Note that LOW is the voltage level
+    digitalWrite(LEDPIN, LOW);   // Turn the LED on (Note that LOW is the voltage level
     // but actually the LED is on; this is because
     // it is acive low on the ESP-01)
   } else {
-    digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage HIGH
+    digitalWrite(LEDPIN, HIGH);  // Turn the LED off by making the voltage HIGH
   }
 
 }
@@ -122,6 +131,8 @@ void reconnect() {
 void setup()
 {
   Serial.begin(115200);
+  pinMode(LEDPIN, OUTPUT);
+  digitalWrite(LEDPIN, HIGH);
 
   if(!WiFi.enableAP(false)) {
     Serial.println("Error disabling AP mode");
@@ -149,6 +160,9 @@ void setup()
 
    mqtt.setServer(mqtt_server, 1883);
    mqtt.setCallback(mqtt_callback);
+   mqtt.publish("outTopic", "hello world");
+   // ... and resubscribe
+   mqtt.subscribe("inTopic");
 }
 
 
