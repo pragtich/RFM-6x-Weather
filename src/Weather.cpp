@@ -195,10 +195,15 @@ void setup()
 
 void loop(){
   rfm.run();
+  yield();
   process_messages();
+  yield();
   if (!mqtt.connected()) {
     reconnect();
   }
+  yield();
   mqtt.loop();
+  yield();
   send_messages();
+  yield();
 }
