@@ -146,8 +146,6 @@ void reconnect() {
       Serial.println("connected");
       // Once connected, publish an announcement...
       mqtt.publish("outTopic", "hello world");
-      // ... and resubscribe
-      mqtt.subscribe("inTopic");
     } else {
       Serial.print("failed, rc=");
       Serial.print(mqtt.state());
@@ -191,8 +189,6 @@ void setup()
    mqtt.setServer(mqtt_server, 1883);
    mqtt.setCallback(mqtt_callback);
    mqtt.publish("outTopic", "hello world");
-   // ... and resubscribe
-   mqtt.subscribe("inTopic");
 }
 
 
