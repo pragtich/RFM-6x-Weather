@@ -43,13 +43,13 @@ uint8_t RFM6xWeather::_crc8( uint8_t *addr, uint8_t len)
 	return crc;
 }
 
-  
+
 // Override of the existing readFifo
 //
 // The existing function is hard-coded for variable packet length, and
 // I want fixed packet length, and am not using in-payload addressing (only the 2dd4)
 //
-//TODO: why is all the SPI stuff hard coded here? 
+//TODO: why is all the SPI stuff hard coded here?
  void RFM6xWeather::Receiver::readFifo()
 {
     ATOMIC_BLOCK_START;
@@ -63,40 +63,42 @@ uint8_t RFM6xWeather::_crc8( uint8_t *addr, uint8_t len)
 
     if (decode_message(_buf, &the_message)){
       if (the_message.type == WEATHER){
-	if (_lastID != the_message.pmessage.w->ID || (millis()-_prelastPreambleTime > mintime)) {
-	  _lastID = the_message.pmessage.w->ID;
-	  if (callback_weather){
-	    (*callback_weather)(the_message.pmessage.w);
-	  } else {
-	    delete the_message.pmessage.w;
-	  }
-	} else {
-	  delete the_message.pmessage.w;
-	}
-      } else if (the_message.type == TIME){
-	if (_lastID != the_message.pmessage.t->ID || (millis()-_prelastPreambleTime > mintime)) {
-	  _lastID = the_message.pmessage.t->ID;
-	  if (callback_time){
-	    (*callback_time)(the_message.pmessage.t);
-	  } else {
-	    delete the_message.pmessage.t;
-	  }
-	} else {
-	  delete the_message.pmessage.t;
-	}
-      }
-      
-    } else {
-      if (the_message.type == UNKNOWN){
-	if (callback_unknown){
-	  (*callback_unknown)(the_message.pmessage.u);
-	} else {
-	  delete the_message.pmessage.u;
-	}
-      }
-    }
+	       if (_lastID != the_message.pmessage.w->ID || (millis()-_prelastPreambleTime > mintime))
+         {
+	          _lastID = the_message.pmessage.w->ID;
+	           if (callback_weather)
+             {
+	              (*callback_weather)(the_message.pmessage.w);
+	             } else
+               {
+	                delete the_message.pmessage.w;
+	               }
+	              } else {
+	                 delete the_message.pmessage.w;
+	                }
+                } else if (the_message.type == TIME){
+	                 if (_lastID != the_message.pmessage.t->ID || (millis()-_prelastPreambleTime > mintime)) {
+	                    _lastID = the_message.pmessage.t->ID;
+	                     if (callback_time){
+	                        (*callback_time)(the_message.pmessage.t);
+	                       } else {
+	                          delete the_message.pmessage.t;
+	                         }
+	                        } else {
+	                           delete the_message.pmessage.t;
+	                          }
+                          }
+                        } else {
+                          if (the_message.type == UNKNOWN){
+	                           if (callback_unknown){
+	                              (*callback_unknown)(the_message.pmessage.u);
+	                             } else {
+	                                delete the_message.pmessage.u;
+	                               }
+                               }
+                             }
     the_message.type = NONE;
-    
+
     digitalWrite(_slaveSelectPin, HIGH);
     ATOMIC_BLOCK_END;
     // Any junk remaining in the FIFO will be cleared next time we go to receive mode.
@@ -108,17 +110,17 @@ uint8_t RFM6xWeather::_crc8( uint8_t *addr, uint8_t len)
     return false;
 
   the_message.type = NONE;
-  
+
   const ModemConfig config = {0x00, 0x07, 0x44, 0x0, 0x0, 1<<4|2|1<<6, 0x8b, 1<<3};
   const uint8_t syncwords[3] = {0xaa, 0x2d, 0xd4};
-  
+
   RH_RF69::setModemRegisters(&config);
   spiWrite(RH_RF69_REG_38_PAYLOADLENGTH, RFM6xW_PACKET_LEN);
   RH_RF69::setFrequency(868.3);
   RH_RF69::setSyncWords(syncwords, sizeof(syncwords));
 
   _deviceForInterrupt[0] = this;
-  
+
   return true;
 }
 
@@ -136,7 +138,7 @@ uint8_t RFM6xWeather::_crc8( uint8_t *addr, uint8_t len)
     // has been done
     if (_mode == RHModeRx && (irqflags2 & RH_RF69_IRQFLAGS2_PAYLOADREADY))
     {
-	// A complete message has been received 
+	// A complete message has been received
 	_lastRssi = -((int8_t)(spiRead(RH_RF69_REG_24_RSSIVALUE) >> 1));
 	_prelastPreambleTime = _lastPreambleTime;
 	_lastPreambleTime = millis();
@@ -172,7 +174,7 @@ void RFM6xWeather::Receiver::set_min_time(int time){
 }
 
 /*
-DCF Time Message Format: 
+DCF Time Message Format:
 This is for Wh1080; WS-3000 is 1 byte shorter
 AAAABBBB BBBBCCCC DDEEEEEE FFFFFFFF GGGGGGGG HHHHHHHH IIIJJJJJ KKKKKKKK LMMMMMMM NNNNNNNN
 0        1        2        3        4        5        6        7        8        9
@@ -204,10 +206,14 @@ bool RFM6xWeather::Receiver::decode_message(uint8_t buffer[RFM6xW_PACKET_LEN], s
       msg->pmessage.w = new struct WeatherMessage;
 
       uint16_t bintemp;
-  
+
+#ifdef RAW_PACKAGES
+      memcpy(msg->pmessage.w->rawmsg, buffer, RFM6xW_PACKET_LEN);
+#endif
+
       msg->pmessage.w->ID = (buffer[0]&0x0f)<<4 | (buffer[1]&0xf0)>>4;
       bintemp = ((buffer[1]&0x07)<<8 | buffer[2]);
-    
+
       msg->pmessage.w->temp = bintemp / 10.0;
       if (buffer[1]&0x08) {
 	msg->pmessage.w->temp = -msg->pmessage.w->temp;
@@ -240,7 +246,7 @@ bool RFM6xWeather::Receiver::decode_message(uint8_t buffer[RFM6xW_PACKET_LEN], s
 
   msg->type = UNKNOWN;
   msg->pmessage.u = new struct UnknownMessage;
-  
+
   msg->pmessage.u->ID =  (buffer[0]&0x0f)<<4 | (buffer[1]&0xf0)>>4;
   memcpy(msg->pmessage.u->message, buffer, RFM6xW_PACKET_LEN);
   return false;
@@ -248,10 +254,9 @@ bool RFM6xWeather::Receiver::decode_message(uint8_t buffer[RFM6xW_PACKET_LEN], s
 
 void RFM6xWeather::Receiver::run(void){
   uint8_t n, buffer[RFM6xW_PACKET_LEN];
-  
+
   if (available()){
     n = sizeof(buffer);
     recv(buffer, &n);
   }
 }
-    

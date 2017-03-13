@@ -1,3 +1,5 @@
+#define RAW_PACKAGES 1
+
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiSTA.h>
 #include <PubSubClient.h>
@@ -21,7 +23,7 @@ typedef struct {
   char topic[MAX_MQTT_LEN];
   char message[MAX_MQTT_LEN];
 } mqtt_msg;
-  
+
 
 #define PRINT_WITH_UNIT(a, b) {\
     Serial.print(a); \
@@ -39,6 +41,7 @@ RingBuf *observations_w = RingBuf_new(sizeof(RFM6xWeather::WeatherMessage), 10);
 RingBuf *mqtt_msgs = RingBuf_new(sizeof(mqtt_msg), 20);
 
 void process_messages() {
+  /* I am assuming only weather observations in the queue! */
   if (!observations_w->isEmpty(observations_w)){
     RFM6xWeather::WeatherMessage obs;
 
@@ -47,6 +50,16 @@ void process_messages() {
       Serial.print("Observed weather at t=");
       Serial.println(millis());
 
+      #ifdef RAW_PACKAGES
+      for (int i=0; i < RFM6xW_PACKET_LEN; i++)
+        {
+          Serial.print(obs.rawmsg[i], HEX);
+          Serial.print(" ");
+        };
+        Serial.println();
+      #endif
+
+
       PRINT_WITH_UNIT("ID:", obs.ID);
 
       PRINT_WITH_UNIT(obs.temp, " ℃");
@@ -54,13 +67,29 @@ void process_messages() {
       PRINT_WITH_UNIT(obs.rain, " mm");
 
       mqtt_msg msg;
+
+      /* Temperature message */
       sprintf(msg.topic, "%s/%s/T", weather_topic, String(obs.ID, HEX).c_str());
       strcpy(msg.message, String(obs.temp).c_str());
       mqtt_msgs->add(mqtt_msgs, &msg);
 
+      /* RH message */
       sprintf(msg.topic, "%s/%s/RH", weather_topic, String(obs.ID, HEX).c_str());
       strcpy(msg.message, String(obs.RH).c_str());
       mqtt_msgs->add(mqtt_msgs, &msg);
+
+      #ifdef RAW_PACKAGES
+      /* Raw packet */
+      sprintf(msg.topic, "%s/%s/RAW", weather_topic, String(obs.ID, HEX).c_str());
+      char raw[RFM6xW_HEADER_LEN*2+1];
+      memset(raw, 0, sizeof(raw));
+      for (int i = 0; i < RFM6xW_PACKET_LEN; i++)
+      {
+        sprintf(&(raw[2*i]), "%02x", obs.rawmsg[i]);
+      }
+      strcpy(msg.message, raw);
+      mqtt_msgs->add(mqtt_msgs, &msg);
+      #endif
     }
   }
 }
@@ -88,10 +117,12 @@ void print_date(RFM6xWeather::TimeMessage *obs){
 }
 
 void observed_w(struct RFM6xWeather::WeatherMessage *obs) {
+
   if (observations_w->add(observations_w, obs) == -1){
     Serial.println("Weather message buffer full; message dropped");
   }
-  
+
+
   delete obs;
 }
 
@@ -189,6 +220,10 @@ void setup()
    mqtt.setServer(mqtt_server, 1883);
    mqtt.setCallback(mqtt_callback);
    mqtt.publish("outTopic", "hello world");
+
+   #ifdef RAW_PACKAGES
+   Serial.println("Printing raw packages");
+   #endif
 }
 
 

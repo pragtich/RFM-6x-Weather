@@ -34,8 +34,8 @@ namespace RFM6xWeather {
     uint8_t ID = 0;
     uint8_t message[RFM6xW_PACKET_LEN];
   };
-			 
-  
+
+
   struct WeatherMessage {
     uint8_t ID = 0;
     float temp = 0.0;
@@ -43,9 +43,11 @@ namespace RFM6xWeather {
     float gust = 0.0;
     uint8_t RH = 0;
     float rain = 0.0;
-
+#ifdef RAW_PACKAGES
+    uint8_t rawmsg[RFM6xW_PACKET_LEN];
+#endif
   };
-  
+
   struct TimeMessage {
     uint8_t ID = 0;
     int year = 0;
@@ -57,19 +59,19 @@ namespace RFM6xWeather {
   };
 
   enum message_t {NONE, WEATHER, TIME, UNKNOWN};
-  
+
   union message_p {
     struct WeatherMessage *w;
     struct TimeMessage *t;
     struct UnknownMessage *u;
   };
-  
+
   struct message {
     enum message_t type;
     union message_p pmessage;
   };
   /* Class Receiver */
-  
+
 class Receiver : public RH_RF69
 {
  public:
@@ -78,7 +80,7 @@ class Receiver : public RH_RF69
     {
     };
   void run(void);
-  
+
   bool init() override;
   void handleInterrupt() override;
   void readFifo() override;
@@ -88,7 +90,7 @@ class Receiver : public RH_RF69
   void set_unknown_handler(void (*handler)(struct UnknownMessage*));
 
   void set_min_time(int time);
-  
+
  protected:
   void (*callback_weather)(WeatherMessage*) = NULL;
   void (*callback_time)(TimeMessage*) = NULL;
