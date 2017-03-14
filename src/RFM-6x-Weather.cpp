@@ -219,9 +219,9 @@ bool RFM6xWeather::Receiver::decode_message(uint8_t buffer[RFM6xW_PACKET_LEN], s
 	msg->pmessage.w->temp = -msg->pmessage.w->temp;
       }
       msg->pmessage.w->RH = buffer[3];
-      msg->pmessage.w->wind = buffer[4];  //Or is it 1.22?
-      msg->pmessage.w->gust = buffer[5];
-      msg->pmessage.w->rain = ((buffer[6]<<8 | buffer[7]) - 0x030c) ;
+      msg->pmessage.w->wind = buffer[4]*1.22;  //Or is it 1.22?
+      msg->pmessage.w->gust = buffer[5]*1.22;
+      msg->pmessage.w->rain = ((buffer[6]<<8 | buffer[7]) - 0x030c) * 0.3 ;
 
       return true;
     }
