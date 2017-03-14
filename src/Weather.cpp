@@ -64,7 +64,9 @@ void process_messages() {
 
       PRINT_WITH_UNIT(obs.temp, " ℃");
       PRINT_WITH_UNIT(obs.RH, " %");
-      PRINT_WITH_UNIT(obs.rain, " mm");
+      PRINT_WITH_UNIT(obs.rain, " raw mm");
+      PRINT_WITH_UNIT(obs.wind, " raw wind");
+      PRINT_WITH_UNIT(obs.gust, " raw gust");
 
       mqtt_msg msg;
 
@@ -76,6 +78,16 @@ void process_messages() {
       /* RH message */
       sprintf(msg.topic, "%s/%s/RH", weather_topic, String(obs.ID, HEX).c_str());
       strcpy(msg.message, String(obs.RH).c_str());
+      mqtt_msgs->add(mqtt_msgs, &msg);
+
+      /* Rain message */
+      sprintf(msg.topic, "%s/%s/RawRain", weather_topic, String(obs.ID, HEX).c_str());
+      strcpy(msg.message, String(obs.rain).c_str());
+      mqtt_msgs->add(mqtt_msgs, &msg);
+
+      /* RH message */
+      sprintf(msg.topic, "%s/%s/RawWind", weather_topic, String(obs.ID, HEX).c_str());
+      strcpy(msg.message, String(obs.wind).c_str());
       mqtt_msgs->add(mqtt_msgs, &msg);
 
       #ifdef RAW_PACKAGES
